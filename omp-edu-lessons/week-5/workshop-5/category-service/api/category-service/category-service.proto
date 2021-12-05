@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package ozonmp.week_4_workshop.category_service.category_service.v1;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "pkg/category-service;category_service";
+
+service CategoryService {
+  rpc GetCategoryById (GetCategoryByIdRequest) returns (GetCategoryByIdResponse);
+}
+
+message Category {
+  uint64 id  = 1;
+  string name = 2;
+}
+
+message GetCategoryByIdRequest {
+  uint64 id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message GetCategoryByIdResponse {
+  // Категория
+  Category category = 1;
+}

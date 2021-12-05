@@ -1,0 +1,248 @@
+version: "3.9"
+
+services:
+  ocp-template-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    logging:
+      driver: 'gelf'
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: ocp-template-api
+    networks:
+      - ocpnw
+    depends_on:
+      - postgres
+      - kafka
+    links:
+      - postgres
+      - kafka
+    ports:
+      - 8081:8081 # REST
+      - 8082:8082 # gRPC
+      - 9100:9100 # Metrics prometheus
+      - 8000:8000 # Status prometheus
+      - 40000:40000 # Debug port
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/live']
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ./migrations:/root/migrations
+      - ./config.yml:/root/config.yml
+
+  postgres:
+    image: postgres:latest
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "postgres" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    logging:
+      driver: 'gelf'
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ocp_template_api
+      APP_DB_USER: docker
+      APP_DB_PASS: docker
+    networks:
+      - ocpnw
+    volumes:
+      # - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    restart: unless-stopped
+    logging:
+      driver: 'gelf'
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: zookeeper
+    ports:
+      - 2181:2181
+    environment:
+      zk_id: "1"
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    networks:
+      - ocpnw
+
+  kafka:
+    image: confluentinc/cp-kafka
+    restart: unless-stopped
+    logging:
+      driver: 'gelf'
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - 9094:9094
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:32181"
+      KAFKA_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    command: sh -c "((sleep 15 && kafka-topics --create --zookeeper zookeeper:32181 --replication-factor 1 --partitions 1 --topic templates)&) && /etc/confluent/docker/run"
+    networks:
+      - ocpnw
+
+  kafka-ui:
+    image: obsidiandynamics/kafdrop
+    restart: unless-stopped
+    depends_on:
+      - kafka
+    ports:
+      - 9001:9001
+    environment:
+      SERVER_PORT: 9001
+      KAFKA_BROKERCONNECT: "kafka:9092"
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    networks:
+      - ocpnw
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    ports:
+      - 8080:8080
+    restart: always
+    volumes:
+      - ./swagger:/docs
+    environment:
+      SWAGGER_JSON: /docs/api.swagger.json
+    depends_on:
+      - ocp-template-api
+    networks:
+      - ocpnw
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    restart: unless-stopped
+    logging:
+      driver: 'gelf'
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: jaeger
+    ports:
+      - 6831:6831/udp
+      - 16686:16686
+    networks:
+      - ocpnw
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    logging:
+      driver: 'gelf'
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: prometheus
+    ports:
+      - 9090:9090
+    networks:
+      - ocpnw
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    links:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=MYPASSWORT
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - ocpnw
+    volumes:
+      - "./data/grafana:/var/lib/grafana"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    networks:
+      - ocpnw
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+  # Elasticsearch: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/docker.html
+
+  mongo:
+    image: mongo:4.2
+    restart: always
+    networks:
+      - ocpnw
+    volumes:
+      - mongodata:/data/db
+
+  # Graylog: https://hub.docker.com/r/graylog/graylog/
+  graylog:
+    image: graylog/graylog:4.0
+    environment:
+      # CHANGE ME (must be at least 16 characters)!
+      - GRAYLOG_PASSWORD_SECRET=somepasswordpepper
+      # Password: admin
+      - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+    entrypoint: /usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh
+    networks:
+      - ocpnw
+    links:
+      - mongo
+      - elasticsearch
+    depends_on:
+      - mongo
+      - elasticsearch
+    ports:
+      # Graylog web interface and REST API
+      - 9000:9000
+      # Syslog TCP
+      - 1514:1514
+      # Syslog UDP
+      - 1514:1514/udp
+      # GELF TCP
+      - 12201:12201
+      # GELF UDP
+      - 12201:12201/udp
+    restart: always
+
+volumes:
+  pgdata:
+    driver: local
+  esdata:
+    driver: local
+  mongodata:
+    driver: local
+
+networks:
+  ocpnw:
+    driver: bridge

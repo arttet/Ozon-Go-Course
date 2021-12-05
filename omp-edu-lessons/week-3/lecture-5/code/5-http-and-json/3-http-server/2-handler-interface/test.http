@@ -1,0 +1,11 @@
+### 404 Not Found
+GET http://localhost:8080/
+
+### 404 Not Found
+POST http://localhost:8080/1/
+
+### 200 Ok
+GET localhost:8080/1
+
+### 200 Ok
+GET localhost:8080/2

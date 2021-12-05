@@ -1,0 +1,12 @@
+- id: 1
+  name: Cars
+  created_at: RAW=NOW()
+- id: 2
+  name: Cameras
+  created_at: RAW=NOW()
+- id: 3
+  name: Toys
+  created_at: RAW=NOW()
+- id: 4
+  name: Hats
+  created_at: RAW=NOW()

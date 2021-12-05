@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "github.com/ozonmp/omp-edu-lessons/week-6/lecture-14/1-load-testing/api;api";
+
+service TestAPI {
+  rpc TestAPIHandler(TestAPIHandlerRequest) returns (TestAPIHandlerResponse);
+}
+
+message TestAPIHandlerRequest {
+  int32 val = 1;
+}
+
+message TestAPIHandlerResponse {
+  int32 val = 1;
+}
+

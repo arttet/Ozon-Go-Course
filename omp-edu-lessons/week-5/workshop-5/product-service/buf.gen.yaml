@@ -1,0 +1,21 @@
+version: v1beta1
+plugins:
+  - name: go
+    out: .
+  - name: go-grpc
+    out: .
+  - name: grpc-gateway
+    out: .
+    opt:
+      - generate_unbound_methods=true
+      - logtostderr=true
+  - name: validate
+    out: .
+    opt:
+      - lang=go
+  - name: openapiv2
+    path: protoc-gen-openapiv2
+    out: swagger
+    opt:
+      - generate_unbound_methods=true
+    strategy: directory

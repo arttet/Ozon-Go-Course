@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package ozoncp.ocp_template_api.v1;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/ozoncp/ocp-template-api/pkg/ocp-template-api;ocp_template_api";
+
+// OcpTemplateApiService - Service for working with templates
+service OcpTemplateApiService {
+  // DescribeTemplateV1 - Describe a template
+  rpc DescribeTemplateV1(DescribeTemplateV1Request) returns (DescribeTemplateV1Response) {
+    option (google.api.http) = {
+      post: "/v1/templates"
+      body: "*"
+    };
+  }
+}
+
+message Template {
+  uint64 id  = 1;
+  uint64 foo = 2;
+}
+
+message DescribeTemplateV1Request {
+  uint64 id = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message DescribeTemplateV1Response {
+  Template value = 1;
+}

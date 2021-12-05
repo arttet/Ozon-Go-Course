@@ -1,0 +1,24 @@
+version: v1
+plugins:
+  - name: go
+    out: pkg/ocp-template-api
+    opt:
+      - paths=import
+  - name: go-grpc
+    out: pkg/ocp-template-api
+    opt:
+      - paths=import
+  - name: grpc-gateway
+    out: pkg/ocp-template-api
+    opt:
+      - logtostderr=true
+      - paths=import
+  - name: validate
+    out: pkg/ocp-template-api
+    opt:
+      - lang=go
+  - name: swagger
+    out: swagger
+    opt:
+      - allow_merge=true
+      - merge_file_name=api

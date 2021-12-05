@@ -1,0 +1,32 @@
+project:
+  name: Ozon Code Platform Template API
+  debug: true
+  environment: development
+
+grpc:
+  host: 0.0.0.0
+  port: 7002
+  maxConnectionIdle: 5 # Minutes
+  timeout: 15 # Seconds
+  maxConnectionAge: 5 # Minutes
+
+gateway:
+  host: 0.0.0.0
+  port: 7000
+  allowedCorsOrigins:
+    - "http://localhost:8001"
+    - "http://127.0.0.1:8001"
+
+swagger:
+  host: 0.0.0.0
+  port: 7001
+  filepath: "swagger/api/product-service/product-service.swagger.json"
+
+categoryServiceAddr: "localhost:6002"
+
+db:
+  DSN: "postgres://user:password@localhost:5432/user"
+  maxOpenConns: 5
+  maxIdleConns: 5
+  connMaxIdleTime: 5m
+  connMaxLifetime: 5m

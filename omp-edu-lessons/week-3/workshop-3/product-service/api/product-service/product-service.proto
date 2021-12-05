@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package ozonmp.week_3_workshop.product_service.product_service.v1;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "pkg/product-service;product_service";
+
+service ProductService {
+  rpc CreateProduct (CreateProductRequest) returns (CreateProductResponse) {
+    option (google.api.http) = {
+      post: "/products/create"
+      body: "*"
+    };
+  }
+}
+
+message Product {
+  int64 id  = 1;
+  string name = 2;
+  int64 category_id = 3;
+}
+
+message CreateProductRequest {
+  string name = 1 [(validate.rules).string = { min_len: 2, max_len: 100 }];
+  int64 category_id = 2 [(validate.rules).int64.gt = 0];
+}
+
+message CreateProductResponse {
+  Product result = 1;
+}

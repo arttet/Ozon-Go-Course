@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package protos;
+
+option go_package = "github.com/ozonmp/week-6-workshop/protos;protos";
+
+message Order {
+  int64 UserID = 1;
+  int64 Timestamp = 2;
+  repeated Product Products = 3;
+  int64 OrderID = 4;
+}
+
+message Product {
+  int64 SKU = 1;
+  double Price = 2;
+  int64 Cnt = 3;
+}

@@ -1,0 +1,5 @@
+### GET запрос
+GET localhost:8080/index
+
+### POST запрос не выполнится
+POST localhost:8080/index

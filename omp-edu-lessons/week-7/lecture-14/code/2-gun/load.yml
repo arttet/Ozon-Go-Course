@@ -1,0 +1,20 @@
+pools:
+  - gun:
+      type: my-custom-gun-name
+      target: localhost:9999
+
+    ammo:
+      type: my-custom-provider-name
+      source: # You may just write file path here. Or stdin.
+        type: inline
+        data: |
+          {"Val": 10}
+          {"Val": 12}
+    result:
+      type: phout
+      destination: ./http_phout.log
+    rps:
+      - {duration: 1m, type: line,  from: 1, to: 5000}
+    startup:
+      type: once
+      times: 5

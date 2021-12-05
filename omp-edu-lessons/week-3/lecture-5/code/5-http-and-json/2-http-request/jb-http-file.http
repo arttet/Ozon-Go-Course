@@ -1,0 +1,3 @@
+### Запрос на получение списка
+GET https://jsonplaceholder.typicode.com/posts/
+Accept: application/json

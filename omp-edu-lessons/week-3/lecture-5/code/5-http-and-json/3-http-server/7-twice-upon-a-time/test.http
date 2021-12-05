@@ -1,0 +1,5 @@
+### Запрос в публичный сервер
+GET http://localhost:8080/index
+
+### Запрос в приватный сервер
+GET http://localhost:8081/version

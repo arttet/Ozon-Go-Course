@@ -1,0 +1,20 @@
+- id: 1
+  category_id: 1
+  name: BMW
+  created_at: RAW=NOW()
+- id: 2
+  category_id: 1
+  name: Audi
+  created_at: RAW=NOW()
+- id: 3
+  category_id: 1
+  name: Opel
+  created_at: RAW=NOW()
+- id: 4
+  category_id: 2
+  name: GoPro
+  created_at: RAW=NOW()
+- id: 5
+  category_id: 4
+  name: Baseball cap
+  created_at: RAW=NOW()

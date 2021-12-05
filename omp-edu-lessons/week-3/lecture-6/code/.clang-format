@@ -1,0 +1,11 @@
+# https://marketplace.visualstudio.com/items?itemName=xaver.clang-format
+---
+BasedOnStyle: Google
+---
+Language: Proto
+# Don't format .proto files.
+AlignConsecutiveAssignments: AcrossComments
+AlignConsecutiveBitFields: AcrossComments
+AlignConsecutiveDeclarations: AcrossComments
+AlignConsecutiveMacros: AcrossComments
+AlignOperands: AlignAfterOperator
